@@ -1,0 +1,165 @@
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <time.h>
+#include <iomanip>
+
+using namespace std;
+
+vector<vector<int>> Result;
+
+vector<vector<int>> Parse(vector<vector<int>>& matrix, int position, int number_of_lines) {
+	vector<vector<int>> result = {};
+	result.resize(number_of_lines);
+	for (int i = 0; i < number_of_lines; i++) {
+		result[i].resize(matrix[0].size());
+	}
+
+	for (int i = 0; i < number_of_lines; i++) {
+		for (int j = 0; j < matrix[0].size(); j++) {
+			result[i][j] = matrix[i + position][j];
+		}
+	}
+
+	return result;
+}
+
+void Multiply(vector<vector<int>>& matrix1, vector<vector<int>>& matrix2, int number_of_lines, int position) {
+	for (int i = 0; i < number_of_lines; i++) {           
+		for (int j = 0; j < matrix2[0].size(); j++) {
+			Result[i + position][j] = 0;
+			for (int t = 0; t < matrix1[0].size(); t++) {
+				Result[i + position][j] += matrix1[i][t] * matrix2[t][j];
+			}
+		}
+	}
+}
+
+int main () {
+	int rows1 = 0, rows2 = 0;
+	int cols1 = 0, cols2 = 0;
+	int number_of_streams = 0;
+
+	cout << "Enter number of streams: ";
+	cin >> number_of_streams;
+
+	vector<vector<int>> Matrix1 = {}, Matrix2 = {};
+
+	cout << "Enter measurements of the first matrix: ";
+	cin >> rows1 >> cols1;
+
+	cout << "Enter measurements of the second matrix: ";
+	cin >> rows2 >> cols2;
+
+	if (cols1 != rows2) {
+		cout << "Error" << endl;
+		return -1;
+	}
+
+	cout << "Enter the first matrix: " << endl;
+	srand(time(NULL));
+	vector<int> line;
+
+	for (int i = 0; i < rows1; ++i) {
+		line.clear();
+
+		for (int j = 0; j < cols1; ++j) {
+			int value = rand() % 10 - rand() % 10;
+			cout << value << " ";
+			line.push_back(value);
+		}
+
+		cout << endl;
+		Matrix1.push_back(line);
+	}
+
+	cout << "Enter the second matrix: " << endl;
+
+	for (int i = 0; i < rows2; ++i) {
+		line.clear();
+
+		for (int j = 0; j < cols2; ++j) {
+			int value = rand() % 10 - rand() % 10;
+			cout << value << " ";
+			line.push_back(value);
+		}
+
+		cout << endl;
+		Matrix2.push_back(line);
+	}
+
+	int number_of_lines = 0, position = 0, remainder = 0;
+
+	number_of_lines = rows1 / number_of_streams;
+	remainder = rows1 % number_of_streams;
+
+	cout << "Number of lines: " << number_of_lines << ", remainder: " << remainder;
+
+	int flag = 0;
+	remainder == 0 ? flag = 0 : flag = 1;
+	remainder += number_of_lines;
+
+	cout << endl;
+	
+	Result.resize(rows1);
+	for (int i = 0; i < rows1; i++) {
+		Result[i].resize(cols2);
+	}
+
+	
+	vector<vector<vector<int>>> SetMatrix;
+
+	for (int i = 0; i < number_of_streams; i++) {
+		if (flag == 1 && i == number_of_streams - 1) {
+			vector<vector<int>> matrix = Parse(Matrix1, position, remainder);
+
+			for (int j = 0; j < remainder; j++) {
+				for (int k = 0; k < cols1; k++) {
+					cout << matrix[j][k];
+				}
+				cout << endl;
+			}
+
+			SetMatrix.push_back(matrix);
+			cout << endl;
+		}
+		else {
+			vector<vector<int>> matrix = Parse(Matrix1, position, number_of_lines);
+
+			for (int j = 0; j < number_of_lines; j++) {
+				for (int k = 0; k < cols1; k++) {
+					cout << matrix[j][k];
+				}
+				cout << endl;
+			}
+
+			SetMatrix.push_back(matrix);
+			cout << endl;
+			position += number_of_lines;
+		}
+	}
+
+	vector<thread> threads = {};
+	position = 0;
+	for (int i = 0; i < number_of_streams - 1; i++) {
+		threads.push_back(thread(Multiply, ref(SetMatrix[i]), ref(Matrix2), number_of_lines, position));
+		position += number_of_lines;
+	}
+
+	threads.push_back(thread(Multiply, ref(SetMatrix[number_of_streams - 1]), ref(Matrix2), remainder, position));
+
+
+	for (int i = 0; i < number_of_streams; i++) {
+		threads[i].join();
+	}
+
+	cout << "Result: " << endl;
+	cout << left;
+	for (int i = 0; i < rows1; i++) {
+		for (int j = 0; j < cols2;j++) {
+			cout << setw(4) << Result[i][j];
+		}
+		cout << endl;
+	}
+	return 0;
+}
