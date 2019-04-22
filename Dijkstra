@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <utility>
+#include <list>
+#include <queue>
+#include <iterator>
+
+using namespace std;
+
+typedef pair<int, int> MyPair;
+
+class Graph {
+	int V_;
+	list<pair<int, int>> *l; // Пара вершин и весов ребра
+public:
+	Graph(int V) {
+		this->V_ = V;
+		l = new list<MyPair>[V_];
+	}
+
+	void Add(int u, int v, int w) {
+		l[u].push_back(make_pair(v, w));
+		l[v].push_back(make_pair(u, w));
+	}
+
+	void shortestPath(int s) {
+		// очередь для хранения вершин, которые предварительно обрабатываются
+		priority_queue< MyPair, vector <MyPair>, greater<MyPair> > pq;
+		const int inf = 10000;
+		vector<int> length(V, inf); // расстояния
+
+		pq.push(make_pair(0, s));
+		length[s] = 0;
+
+		while (!pq.empty()) {
+			int u = pq.top().second;
+			pq.pop();
+
+			list< pair<int, int> >::iterator i;
+			for (i = l[u].begin(); i != l[u].end(); ++i) {
+				int v = (*i).first; // Получим метку вершины и вес текущего смежного с u
+				int weight = (*i).second;
+
+				if (length[v] > length[u] + weight) { // Если есть короткий путь к v через u
+					length[v] = length[u] + weight;
+					pq.push(make_pair(length[v], v));
+				}
+			}
+		}
+
+		printf("Vertex  :  Distance from Source\n");
+		for (int i = 0; i < V; ++i)
+			printf("%d \t:\t %d\n", i, length[i]);
+	}
+};
+
+
+int main() {
+	int V;
+	cin >> V;
+	Graph graph(V);
+	int u = 0, v = 0, w = 0;
+
+	while (cin >> u >> v >> w) {
+		graph.Add(u, v, w);
+	}
+
+	graph.shortestPath(0);
+	system("pause");
+	return 0;
+}
